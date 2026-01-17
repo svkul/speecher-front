@@ -1,0 +1,15 @@
+## Documentation Reference
+
+**ALWAYS** refer to frontend documentation before making changes:
+
+### Frontend Documentation
+- `docs/frontend/overview.md` - Frontend architecture and structure
+
+### Business Logic
+- `docs/business-logic/overview.md` - Application business logic and requirements
+
+---
+
+## Additional Rules
+
+<!-- Add frontend-specific rules here as the project grows -->
