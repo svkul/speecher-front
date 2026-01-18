@@ -26,4 +26,21 @@ export const config = {
    */
   env: (Constants.expoConfig?.extra?.ENV as 'development' | 'production') ??
     'development',
+
+  /**
+   * OAuth Configuration
+   */
+  oauth: {
+    google: {
+      clientIdWeb: Constants.expoConfig?.extra?.GOOGLE_CLIENT_ID_WEB as
+        | string
+        | undefined,
+      clientIdIos: Constants.expoConfig?.extra?.GOOGLE_CLIENT_ID_IOS as
+        | string
+        | undefined,
+      clientIdAndroid: Constants.expoConfig?.extra?.GOOGLE_CLIENT_ID_ANDROID as
+        | string
+        | undefined,
+    },
+  },
 } as const;

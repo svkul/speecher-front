@@ -9,6 +9,12 @@ const getEnvVars = () => {
   const API_TIMEOUT = process.env.EXPO_PUBLIC_API_TIMEOUT || '10000';
   const ENV = process.env.EXPO_PUBLIC_ENV || 'development';
 
+  // OAuth configuration
+  const GOOGLE_CLIENT_ID_WEB = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_WEB;
+  const GOOGLE_CLIENT_ID_IOS = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_IOS;
+  const GOOGLE_CLIENT_ID_ANDROID =
+    process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_ANDROID;
+
   // Validate required variables
   if (!BASE_URL) {
     throw new Error(
@@ -35,6 +41,9 @@ const getEnvVars = () => {
     BASE_URL,
     API_TIMEOUT: timeout,
     ENV: ENV as 'development' | 'production',
+    GOOGLE_CLIENT_ID_WEB,
+    GOOGLE_CLIENT_ID_IOS,
+    GOOGLE_CLIENT_ID_ANDROID,
   };
 };
 
