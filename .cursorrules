@@ -4,6 +4,9 @@
 
 ### Frontend Documentation
 - `docs/frontend/overview.md` - Frontend architecture and structure
+- `docs/frontend/config.md` - Frontend configuration and environment variables
+- `docs/frontend/axios.md` - Axios client configuration and interceptors
+- `docs/frontend/api.md` - API client usage and error handling
 
 ### Business Logic
 - `docs/business-logic/overview.md` - Application business logic and requirements
