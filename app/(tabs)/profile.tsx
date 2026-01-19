@@ -9,7 +9,7 @@ import { Ionicons } from "@expo/vector-icons";
 export default function ProfileScreen() {
   const { theme } = useThemeStore();
   const user = useUserStore((state) => state.user);
-  const { handleOAuthSignIn, isLoading } = useAuth();
+  const { handleOAuthSignIn, signOut, isLoading } = useAuth();
   
   const handleGoogleSignIn = async () => {
     try {
@@ -31,6 +31,26 @@ export default function ProfileScreen() {
           [{ text: "OK" }]
         );
         return;
+      }
+    } catch (error: any) {
+      Alert.alert(
+        "Error",
+        error?.message || "Something went wrong. Please try again.",
+        [{ text: "OK" }]
+      );
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      const result = await signOut();
+      
+      if (!result.success) {
+        Alert.alert(
+          "Sign Out Failed",
+          result.error || "Something went wrong. Please try again.",
+          [{ text: "OK" }]
+        );
       }
     } catch (error: any) {
       Alert.alert(
@@ -119,6 +139,39 @@ export default function ProfileScreen() {
             </Text>
           </View>
         </View>
+
+        <Pressable
+          style={[
+            styles.signOutButton,
+            {
+              backgroundColor: THEME[theme].button.bg,
+              opacity: isLoading ? 0.6 : 1,
+            },
+          ]}
+          onPress={handleSignOut}
+          disabled={isLoading}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          {isLoading ? (
+            <ActivityIndicator color={THEME[theme].button.text} />
+          ) : (
+            <>
+              <Ionicons
+                name="log-out-outline"
+                size={20}
+                color={THEME[theme].button.text}
+              />
+              <Text
+                style={[
+                  styles.signOutButtonText,
+                  { color: THEME[theme].button.text },
+                ]}
+              >
+                Sign Out
+              </Text>
+            </>
+          )}
+        </Pressable>
       </View>
     );
   };
@@ -285,5 +338,21 @@ const styles = StyleSheet.create({
   metaValue: {
     fontSize: 14,
     fontWeight: "500",
+  },
+  signOutButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    marginTop: 32,
+    alignSelf: "center",
+    minWidth: 200,
+  },
+  signOutButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
   },
 });
