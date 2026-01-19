@@ -40,15 +40,20 @@ export const useAuth = () => {
   const handleOAuthSignIn = async (provider: "google" | "apple") => {
     try {
       setIsLoading(true);
+      console.log(`handleOAuthSignIn: Starting ${provider} sign in on ${Platform.OS}`);
 
       if (provider === "google") {
         if (Platform.OS === "ios") {
+          console.log("handleOAuthSignIn: Using iOS Google sign in");
           return await signInWithGoogleIOS();
         } else if (Platform.OS === "android") {
+          console.log("handleOAuthSignIn: Using Android Google sign in");
           return await signInWithGoogleAndroid();
         } else if (Platform.OS === "web") {
+          console.log("handleOAuthSignIn: Using Web Google sign in");
           return await signInWithGoogleWeb();
         } else {
+          console.error("handleOAuthSignIn: Unsupported platform:", Platform.OS);
           return {
             success: false,
             error: "Unsupported platform for Google OAuth",
@@ -57,14 +62,17 @@ export const useAuth = () => {
       }
 
       if (provider === "apple") {
+        console.log("handleOAuthSignIn: Using Apple sign in");
         return await signInWithApple();
       }
 
+      console.error("handleOAuthSignIn: Unsupported provider:", provider);
       return { success: false, error: "Unsupported OAuth provider" };
     } catch (error: any) {
+      console.error("handleOAuthSignIn: Unexpected error:", error);
       return {
         success: false,
-        error: error.message || "Failed to sign in with OAuth",
+        error: error?.message || "Failed to sign in with OAuth",
       };
     } finally {
       setIsLoading(false);
@@ -362,10 +370,11 @@ export const useAuth = () => {
         success: false,
         error: "Unexpected OAuth result",
       };
-    } catch {
+    } catch (error: any) {
+      console.error("signInWithGoogleWeb error:", error);
       return {
         success: false,
-        error: "Failed to sign in with Google on web",
+        error: error?.message || "Failed to sign in with Google on web",
       };
     }
   };
@@ -378,6 +387,7 @@ export const useAuth = () => {
    */
   const verifyAndSaveOAuthToken = async (idToken: string) => {
     if (!idToken) {
+      console.error("verifyAndSaveOAuthToken: No ID token provided");
       return {
         success: false,
         error: "Failed to get ID token from Google",
@@ -385,9 +395,16 @@ export const useAuth = () => {
     }
 
     try {
+      console.log("verifyAndSaveOAuthToken: Verifying token with backend...");
       // Send ID Token to backend for verification
       // Backend will verify token, create/find user, and return OUR JWT tokens (or empty for web)
       const authData = await signInWithOAuth(OAuthProvider.GOOGLE, idToken);
+      console.log("verifyAndSaveOAuthToken: Backend response received", {
+        hasUser: !!authData.user,
+        hasAccessToken: !!authData.accessToken,
+        hasRefreshToken: !!authData.refreshToken,
+        platform: Platform.OS,
+      });
 
       // For web: tokens are empty (in httpOnly cookies), for mobile: tokens in response
       // saveTokens handles this internally - on web it does nothing, on mobile it saves to storage
@@ -395,6 +412,7 @@ export const useAuth = () => {
         Platform.OS !== "web" &&
         (!authData.accessToken || !authData.refreshToken)
       ) {
+        console.error("verifyAndSaveOAuthToken: Missing tokens for mobile platform");
         return {
           success: false,
           error: "Failed to get tokens from backend",
@@ -406,10 +424,12 @@ export const useAuth = () => {
         accessToken: authData.accessToken,
         refreshToken: authData.refreshToken,
       });
+      console.log("verifyAndSaveOAuthToken: Tokens saved");
 
       // Save user to store
       if (authData.user) {
         setUser(authData.user);
+        console.log("verifyAndSaveOAuthToken: User saved to store");
       }
 
       return {
@@ -417,9 +437,11 @@ export const useAuth = () => {
         user: authData.user,
       };
     } catch (error: any) {
+      console.error("verifyAndSaveOAuthToken: Error:", error);
       // Handle Axios errors
       if (error instanceof AxiosError && error.response) {
         const errorData = error.response.data as AppErrorResponse;
+        console.error("verifyAndSaveOAuthToken: Axios error response:", errorData);
         return {
           success: false,
           error: errorData.message || "Failed to verify OAuth token",
@@ -428,7 +450,7 @@ export const useAuth = () => {
 
       return {
         success: false,
-        error: error.message || "Failed to verify OAuth token",
+        error: error?.message || "Failed to verify OAuth token",
       };
     }
   };

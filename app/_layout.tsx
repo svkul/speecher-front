@@ -1,20 +1,19 @@
-import { useUserSync } from "@/hooks/useUserSync";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Stack } from "expo-router";
-import { SafeAreaProvider } from "react-native-safe-area-context";
 import { useEffect } from "react";
+import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import * as SystemUI from "expo-system-ui";
 
 import i18n from "@/libs/i18n/i18n.config";
 import { THEME } from "@/libs/theme";
 import { useThemeStore } from "@/store/themeStore";
 import { useLanguageStore } from "@/store/languageStore";
+import { useUserSync } from "@/hooks/useUserSync";
 
 export default function RootLayout() {
-  // Create a client
-const queryClient = new QueryClient()
-
+  const queryClient = new QueryClient()
+  
   return (
     <QueryClientProvider client={queryClient}>
       <UserSyncWrapper />

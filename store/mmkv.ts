@@ -73,9 +73,7 @@ export const createMMKVStorage = ({
   if (Platform.OS === "web") {
     storage = new WebStorage(storageId);
   } else {
-    // Don't use encryptionKey on web platform (not supported)
-    const shouldUseEncryption = encryptionKey && Platform.OS !== "web";
-    const options = shouldUseEncryption
+    const options = encryptionKey 
       ? { id: storageId, encryptionKey }
       : { id: storageId };
 
