@@ -11,6 +11,8 @@ import { useThemeStore } from "@/store/themeStore";
 import { useLanguageStore } from "@/store/languageStore";
 import { useUserSync } from "@/hooks/useUserSync";
 
+import "@/global.css";
+
 export default function RootLayout() {
   const queryClient = new QueryClient()
   
