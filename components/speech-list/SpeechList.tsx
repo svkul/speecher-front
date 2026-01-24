@@ -1,7 +1,10 @@
-import { View, Text } from "react-native";
+import { View } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 
 import { getSpeeches } from "@/api/speech.service";
+
+import { Button } from "@/components/ui/button";
+import { Text } from "@/components/ui/text";
 
 export const SpeechList = () => {
   const { data: speeches, isLoading, isError } = useQuery({
@@ -17,9 +20,19 @@ export const SpeechList = () => {
 
       {isError && <Text>Error: {isError.message}</Text>}
 
-      {speeches && speeches.map((speech) => (
-        <Text key={speech.id}>{speech.title}</Text>
-      ))}
+      {speeches && (
+        <View className="mb-2">
+          {speeches.map((speech) => (
+            <View key={speech.id}>
+              <Text>{speech.title}</Text>
+            </View>
+          ))}
+        </View>
+      )}
+
+      <Button>
+        <Text>Add new speech</Text>
+      </Button>
     </View>
   );
 };
