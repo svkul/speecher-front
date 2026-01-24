@@ -1,3 +1,4 @@
+import { PortalHost } from "@rn-primitives/portal";
 import { useEffect } from "react";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -64,7 +65,7 @@ function SafeAreaProviderWrapper() {
         {/* <Stack.Screen name="auth" /> */}
       </Stack>
 
-      {/* <PortalHost /> */}
+      <PortalHost />
       {/* <AuthModal /> */}
       {/* <Toast position="top" /> */}
     </SafeAreaProvider>

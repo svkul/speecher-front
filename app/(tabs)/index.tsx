@@ -2,9 +2,11 @@ import { View, Text } from "react-native";
 import { useThemeStore } from "@/store/themeStore";
 import { THEME } from "@/libs/theme";
 import { SpeechList } from "@/components/speech-list/SpeechList";
+import { useUserStore } from "@/store/userStore";
 
 export default function HomeScreen() {
   const { theme } = useThemeStore();
+  const { user } = useUserStore();
 
   return (
     <View
@@ -17,7 +19,9 @@ export default function HomeScreen() {
         Welcome to Speecher
       </Text>
 
-      <SpeechList />
+      {user && (
+        <SpeechList />
+      )}
     </View>
   );
 }
