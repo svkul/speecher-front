@@ -62,6 +62,7 @@ function SafeAreaProviderWrapper() {
         }}
       >
         <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="speech" />
         {/* <Stack.Screen name="auth" /> */}
       </Stack>
 
