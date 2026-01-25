@@ -17,6 +17,7 @@ import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SpeechBlockEdit } from "@/components/speech/edit/SpeechBlockEdit";
+import { AudioPlayer } from "@/components/audio/AudioPlayer";
 
 export default function SpeechDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -191,6 +192,13 @@ export default function SpeechDetailScreen() {
           )}
         </Button>
       </View>
+
+      {/* Audio Player */}
+      {speech.blocks && speech.blocks.some(block => block.audioUrl) && (
+        <View className="mb-4">
+          <AudioPlayer blocks={speech.blocks} />
+        </View>
+      )}
 
       {speech.blocks && speech.blocks.length > 0 ? (
         <View className="space-y-4">

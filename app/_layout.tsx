@@ -49,6 +49,7 @@ function SafeAreaProviderWrapper() {
     }
   }, [language]);
 
+
   const statusBarStyle = savedTheme === "dark" ? "light" : "dark";
 
   return (
