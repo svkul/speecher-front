@@ -11,7 +11,17 @@ import { FullWindowOverlay as RNFullWindowOverlay } from 'react-native-screens';
 
 type Option = SelectPrimitive.Option;
 
-const Select = SelectPrimitive.Root;
+/**
+ * The upstream `@rn-primitives/select` types for `Root` value vary by version.
+ * In this app we treat the controlled `value` as a string (the selected item's value),
+ * while `onValueChange` delivers an Option-like object.
+ */
+type SelectRootProps = Omit<React.ComponentProps<typeof SelectPrimitive.Root>, 'value' | 'onValueChange'> & {
+  value?: string;
+  onValueChange?: (option: Option | string | undefined) => void;
+};
+
+const Select = SelectPrimitive.Root as unknown as React.ComponentType<SelectRootProps>;
 
 const SelectGroup = SelectPrimitive.Group;
 
@@ -117,10 +127,27 @@ function SelectContent({
                         'w-full',
                         Platform.select({
                           web: 'h-[var(--radix-select-trigger-height)] min-w-[var(--radix-select-trigger-width)]',
+                          native: 'max-h-52',
                         })
                       )
-                  )}>
-                  {children}
+                  )}
+                  style={Platform.select({
+                    native: { maxHeight: 208 },
+                  })}>
+                  {Platform.OS === 'web' ? (
+                    children
+                  ) : (
+                    <ScrollView
+                      style={{ flex: 1 }}
+                      nestedScrollEnabled={true}
+                      scrollEnabled={true}
+                      showsVerticalScrollIndicator={true}
+                      keyboardShouldPersistTaps="always"
+                      contentContainerStyle={{ paddingVertical: 4 }}
+                      bounces={false}>
+                      {children}
+                    </ScrollView>
+                  )}
                 </SelectPrimitive.Viewport>
                 <SelectScrollDownButton />
               </SelectPrimitive.Content>
@@ -230,11 +257,30 @@ function SelectScrollDownButton({
  * @platform Native only
  * Returns the children on the web
  */
-function NativeSelectScrollView({ className, ...props }: React.ComponentProps<typeof ScrollView>) {
+function NativeSelectScrollView({ className, style, children, ...props }: React.ComponentProps<typeof ScrollView>) {
   if (Platform.OS === 'web') {
-    return <>{props.children}</>;
+    return <>{children}</>;
   }
-  return <ScrollView className={cn('max-h-52', className)} {...props} />;
+  return (
+    <ScrollView
+      className={cn('max-h-52', className)}
+      style={[{ maxHeight: 208 }, style]}
+      nestedScrollEnabled={true}
+      scrollEnabled={true}
+      showsVerticalScrollIndicator={true}
+      keyboardShouldPersistTaps="always"
+      contentContainerStyle={{ paddingVertical: 4 }}
+      bounces={false}
+      removeClippedSubviews={false}
+      alwaysBounceVertical={false}
+      scrollEventThrottle={16}
+      onStartShouldSetResponder={() => false}
+      onMoveShouldSetResponder={() => false}
+      {...props}
+    >
+      {children}
+    </ScrollView>
+  );
 }
 
 export {

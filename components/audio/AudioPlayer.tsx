@@ -35,9 +35,6 @@ function formatTime(seconds: number): string {
 export function AudioPlayer({ blocks, className }: AudioPlayerProps) {
   const { theme } = useThemeStore();
   
-  console.log('[AudioPlayer Component] Rendering with blocks:', blocks?.length);
-  console.log('[AudioPlayer Component] Blocks:', blocks);
-  
   const {
     isInitialized,
     isPlaying,
@@ -57,43 +54,27 @@ export function AudioPlayer({ blocks, className }: AudioPlayerProps) {
     cleanup,
   } = useAudioPlayer();
 
-  console.log('[AudioPlayer Component] State:', {
-    isInitialized,
-    isLoading,
-    tracksLength: tracks.length,
-    currentTrackIndex,
-  });
-
   // Initialize player when blocks change
   useEffect(() => {
-    console.log('[AudioPlayer Component] useEffect triggered with blocks:', blocks?.length);
     const blocksWithAudio = blocks.filter(b => b.audioUrl);
-    console.log('[AudioPlayer Component] Blocks with audio:', blocksWithAudio.length);
     if (blocksWithAudio.length > 0) {
-      console.log('[AudioPlayer Component] Calling initializePlayer');
       initializePlayer(blocks);
     }
 
     return () => {
-      console.log('[AudioPlayer Component] Cleanup');
       cleanup();
     };
   }, [blocks, initializePlayer, cleanup]);
 
   // Don't render if no audio blocks
   const blocksWithAudio = blocks.filter(b => b.audioUrl);
-  console.log('[AudioPlayer Component] Blocks with audio for render check:', blocksWithAudio.length);
   
   if (blocksWithAudio.length === 0) {
-    console.log('[AudioPlayer Component] No blocks with audio, returning null');
     return null;
   }
 
   // Show loading spinner only while initializing (before tracks are loaded)
-  console.log('[AudioPlayer Component] Render check:', { isInitialized, tracksLength: tracks.length });
-  
   if (!isInitialized || tracks.length === 0) {
-    console.log('[AudioPlayer Component] Showing loading spinner');
     return (
       <View
         className={cn('p-4 rounded-lg border border-border bg-card', className)}
@@ -103,8 +84,6 @@ export function AudioPlayer({ blocks, className }: AudioPlayerProps) {
       </View>
     );
   }
-  
-  console.log('[AudioPlayer Component] Rendering full player');
 
   const currentTrack = currentTrackIndex !== null ? tracks[currentTrackIndex] : null;
   const hasNext = currentTrackIndex !== null && currentTrackIndex < tracks.length - 1;

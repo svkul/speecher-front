@@ -1,4 +1,5 @@
 import { View, Alert } from "react-native";
+import { Picker } from "@react-native-picker/picker";
 import { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -11,15 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-  NativeSelectScrollView,
-  type Option,
-} from "@/components/ui/select";
+// Using native Picker for stable selection behavior on Android/iOS
 
 interface SpeechBlockEditProps {
   block: SpeechBlockResponse;
@@ -93,9 +86,8 @@ export const SpeechBlockEdit = ({
     mutation.mutate(data);
   };
 
-  const handleLanguageChange = (option: Option | undefined) => {
-    if (!option) return;
-    const newLanguage = option.value;
+  const handleLanguageChange = (newLanguage: string | undefined) => {
+    if (!newLanguage) return;
     setValue("ttsLanguage", newLanguage);
     // Reset voice when language changes
     if (newLanguage !== watchedLanguage) {
@@ -202,24 +194,22 @@ export const SpeechBlockEdit = ({
         <Controller
           control={control}
           name="ttsLanguage"
-          render={({ field: { value } }) => (
-            <Select
-              value={value || undefined}
-              onValueChange={handleLanguageChange}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select language" />
-              </SelectTrigger>
-              <SelectContent>
-                <NativeSelectScrollView>
-                  {languagesData?.languages.map((lang) => (
-                    <SelectItem key={lang.code} value={lang.code} label={lang.name}>
-                      <Text>{lang.name}</Text>
-                    </SelectItem>
-                  ))}
-                </NativeSelectScrollView>
-              </SelectContent>
-            </Select>
+          render={({ field: { value, onChange } }) => (
+            <View className="rounded-md border border-border bg-card px-2">
+              <Picker
+                selectedValue={value ?? ""}
+                onValueChange={(v) => {
+                  const next = v ? String(v) : undefined;
+                  onChange(next);
+                  handleLanguageChange(next);
+                }}
+              >
+                <Picker.Item label="Select language" value="" />
+                {languagesData?.languages.map((lang) => (
+                  <Picker.Item key={lang.code} label={lang.name} value={lang.code} />
+                ))}
+              </Picker>
+            </View>
           )}
         />
       </View>
@@ -232,36 +222,25 @@ export const SpeechBlockEdit = ({
           control={control}
           name="ttsVoice"
           render={({ field: { onChange, value } }) => (
-            <Select
-              value={value || undefined}
-              onValueChange={(option: Option | undefined) => {
-                if (option) onChange(option.value);
-              }}
-              disabled={!watchedLanguage}
-            >
-              <SelectTrigger>
-                <SelectValue
-                  placeholder={
-                    watchedLanguage ? "Select voice" : "Select language first"
-                  }
+            <View className="rounded-md border border-border bg-card px-2">
+              <Picker
+                enabled={!!watchedLanguage}
+                selectedValue={value ?? ""}
+                onValueChange={(v) => onChange(v ? String(v) : undefined)}
+              >
+                <Picker.Item
+                  label={watchedLanguage ? "Select voice" : "Select language first"}
+                  value=""
                 />
-              </SelectTrigger>
-              <SelectContent>
-                <NativeSelectScrollView>
-                  {voicesData?.voices.map((voice) => (
-                    <SelectItem
-                      key={voice.name}
-                      value={voice.name}
-                      label={`${voice.name} (${voice.ssmlGender})`}
-                    >
-                      <Text>
-                        {voice.name} ({voice.ssmlGender})
-                      </Text>
-                    </SelectItem>
-                  ))}
-                </NativeSelectScrollView>
-              </SelectContent>
-            </Select>
+                {voicesData?.voices.map((voice) => (
+                  <Picker.Item
+                    key={voice.name}
+                    label={`${voice.name} (${voice.ssmlGender})`}
+                    value={voice.name}
+                  />
+                ))}
+              </Picker>
+            </View>
           )}
         />
       </View>
@@ -274,28 +253,18 @@ export const SpeechBlockEdit = ({
           control={control}
           name="ttsModel"
           render={({ field: { onChange, value } }) => (
-            <Select
-              value={value || undefined}
-              onValueChange={(option: Option | undefined) => {
-                if (option) onChange(option.value);
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select model" />
-              </SelectTrigger>
-              <SelectContent>
-                <NativeSelectScrollView>
-                  {modelsData?.models.map((model) => {
-                    const label = `${model.name}${model.name === modelsData.recommendedModel ? " (Recommended)" : ""}`;
-                    return (
-                      <SelectItem key={model.name} value={model.name} label={label}>
-                        <Text>{label}</Text>
-                      </SelectItem>
-                    );
-                  })}
-                </NativeSelectScrollView>
-              </SelectContent>
-            </Select>
+            <View className="rounded-md border border-border bg-card px-2">
+              <Picker
+                selectedValue={value ?? ""}
+                onValueChange={(v) => onChange(v ? String(v) : undefined)}
+              >
+                <Picker.Item label="Select model" value="" />
+                {modelsData?.models.map((model) => {
+                  const label = `${model.name}${model.name === modelsData.recommendedModel ? " (Recommended)" : ""}`;
+                  return <Picker.Item key={model.name} label={label} value={model.name} />;
+                })}
+              </Picker>
+            </View>
           )}
         />
       </View>

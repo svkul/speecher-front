@@ -5,7 +5,7 @@
  * Provides controls for play/pause, speed adjustment, seeking, and track navigation.
  */
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useAudioPlayer as useExpoAudioPlayer, useAudioPlayerStatus, AudioSource } from 'expo-audio';
 import { SpeechBlockResponse } from '@/api/types';
 
@@ -90,6 +90,7 @@ export function useAudioPlayer(): UseAudioPlayerReturn {
   const [playbackSpeed, setPlaybackSpeedState] = useState<PlaybackSpeed>(1);
   const [tracks, setTracks] = useState<Track[]>([]);
   const [currentSource, setCurrentSource] = useState<AudioSource | null>(null);
+  const isCleaningUpRef = useRef(false);
   
   // Use expo-audio player hook
   const player = useExpoAudioPlayer(currentSource || undefined, {
@@ -102,7 +103,11 @@ export function useAudioPlayer(): UseAudioPlayerReturn {
   // Update playback speed when it changes
   useEffect(() => {
     if (player && playbackSpeed !== undefined && player.isLoaded) {
-      player.playbackRate = playbackSpeed;
+      try {
+        player.setPlaybackRate(playbackSpeed);
+      } catch (error) {
+        console.error('[AudioPlayer] Failed to set playback rate:', error);
+      }
     }
   }, [player, playbackSpeed]);
 
@@ -111,23 +116,18 @@ export function useAudioPlayer(): UseAudioPlayerReturn {
    */
   const initializePlayer = useCallback(async (blocks: SpeechBlockResponse[]) => {
     try {
-      console.log('[AudioPlayer] Initializing with blocks:', blocks.length);
       // Convert blocks to tracks
       const newTracks = convertBlocksToTracks(blocks);
-      console.log('[AudioPlayer] Converted tracks:', newTracks.length, newTracks);
       setTracks(newTracks);
 
       if (newTracks.length > 0) {
         setCurrentTrackIndex(0);
         // Set source for expo-audio
         const source = { uri: newTracks[0].url };
-        console.log('[AudioPlayer] Setting source:', source);
         setCurrentSource(source);
         setIsInitialized(true);
-        console.log('[AudioPlayer] Initialized successfully');
       } else {
         setIsInitialized(false);
-        console.log('[AudioPlayer] No tracks to initialize');
       }
     } catch (error) {
       console.error('[AudioPlayer] Failed to initialize player:', error);
@@ -248,14 +248,14 @@ export function useAudioPlayer(): UseAudioPlayerReturn {
    */
   const setSpeed = useCallback(async (speed: PlaybackSpeed) => {
     try {
-      if (player) {
-        player.playbackRate = speed;
+      if (player && player.isLoaded) {
+        player.setPlaybackRate(speed);
         setPlaybackSpeedState(speed);
       } else {
         setPlaybackSpeedState(speed);
       }
     } catch (error) {
-      console.error('Failed to set speed:', error);
+      console.error('[AudioPlayer] Failed to set speed:', error);
     }
   }, [player]);
 
@@ -291,16 +291,34 @@ export function useAudioPlayer(): UseAudioPlayerReturn {
    * Cleanup player on unmount
    */
   const cleanup = useCallback(async () => {
+    // Prevent multiple cleanup calls
+    if (isCleaningUpRef.current) {
+      return;
+    }
+    
+    isCleaningUpRef.current = true;
+    
     try {
-      if (player) {
-        player.pause();
+      // Only pause if player is loaded and valid
+      if (player && player.isLoaded && typeof player.pause === 'function') {
+        try {
+          // Check if player is still playing before pausing
+          if (player.playing) {
+            player.pause();
+          }
+        } catch (pauseError) {
+          // Ignore pause errors during cleanup - player may already be released
+        }
       }
+    } catch (error) {
+      // Silently ignore cleanup errors - player may already be released
+    } finally {
+      // Always reset state, even if pause failed
       setCurrentSource(null);
       setIsInitialized(false);
       setCurrentTrackIndex(null);
       setTracks([]);
-    } catch (error) {
-      console.error('Failed to cleanup player:', error);
+      isCleaningUpRef.current = false;
     }
   }, [player]);
 
@@ -333,19 +351,6 @@ export function useAudioPlayer(): UseAudioPlayerReturn {
     };
   }, [cleanup]);
 
-  // Log player status for debugging
-  useEffect(() => {
-    if (player) {
-      console.log('[AudioPlayer] Player status:', {
-        isLoaded: player.isLoaded,
-        playing: player.playing,
-        paused: player.paused,
-        isBuffering: player.isBuffering,
-        currentTime: player.currentTime,
-        duration: player.duration,
-      });
-    }
-  }, [player?.isLoaded, player?.playing, player?.currentTime]);
 
   // Determine loading state - only show loading if actively buffering
   const isLoading = player?.isBuffering || false;

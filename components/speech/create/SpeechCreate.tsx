@@ -1,4 +1,5 @@
 import { View, ScrollView, Alert } from "react-native";
+import { Picker } from "@react-native-picker/picker";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
@@ -16,15 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-  NativeSelectScrollView,
-  type Option,
-} from "@/components/ui/select";
+// Using native Picker for stable selection behavior on Android/iOS
 import { useThemeStore } from "@/store/themeStore";
 import { THEME } from "@/libs/theme";
 
@@ -81,9 +74,8 @@ const BlockTtsFields = ({
     queryFn: () => getTtsModels(),
   });
 
-  const handleLanguageChange = (option: Option | undefined) => {
-    if (!option) return;
-    const newLanguage = option.value;
+  const handleLanguageChange = (newLanguage: string | undefined) => {
+    if (!newLanguage) return;
     setValue(`blocks.${index}.ttsLanguage` as any, newLanguage);
     // Reset voice when language changes
     if (newLanguage !== language) {
@@ -97,27 +89,26 @@ const BlockTtsFields = ({
         <Text className="mb-2 text-sm text-muted-foreground">
           TTS Language (optional)
         </Text>
+
         <Controller
           control={control}
           name={`blocks.${index}.ttsLanguage`}
-          render={({ field: { value } }) => (
-            <Select
-              value={value || undefined}
-              onValueChange={handleLanguageChange}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select language" />
-              </SelectTrigger>
-              <SelectContent>
-                <NativeSelectScrollView>
-                  {languagesData?.languages.map((lang) => (
-                    <SelectItem key={lang.code} value={lang.code} label={lang.name}>
-                      <Text>{lang.name}</Text>
-                    </SelectItem>
-                  ))}
-                </NativeSelectScrollView>
-              </SelectContent>
-            </Select>
+          render={({ field: { value, onChange } }) => (
+            <View className="rounded-md border border-border bg-card px-2">
+              <Picker
+                selectedValue={value ?? ""}
+                onValueChange={(v) => {
+                  const next = v ? String(v) : undefined;
+                  onChange(next);
+                  handleLanguageChange(next);
+                }}
+              >
+                <Picker.Item label="Select language" value="" />
+                {languagesData?.languages.map((lang) => (
+                  <Picker.Item key={lang.code} label={lang.name} value={lang.code} />
+                ))}
+              </Picker>
+            </View>
           )}
         />
       </View>
@@ -126,42 +117,30 @@ const BlockTtsFields = ({
         <Text className="mb-2 text-sm text-muted-foreground">
           TTS Voice (optional)
         </Text>
+
         <Controller
           control={control}
           name={`blocks.${index}.ttsVoice`}
           render={({ field: { onChange, value } }) => (
-            <Select
-              value={value || undefined}
-              onValueChange={(option: Option | undefined) => {
-                if (option) onChange(option.value);
-              }}
-              disabled={!language}
-            >
-              <SelectTrigger>
-                <SelectValue
-                  placeholder={
-                    language
-                      ? "Select voice"
-                      : "Select language first"
-                  }
+            <View className="rounded-md border border-border bg-card px-2">
+              <Picker
+                enabled={!!language}
+                selectedValue={value ?? ""}
+                onValueChange={(v) => onChange(v ? String(v) : undefined)}
+              >
+                <Picker.Item
+                  label={language ? "Select voice" : "Select language first"}
+                  value=""
                 />
-              </SelectTrigger>
-              <SelectContent>
-                <NativeSelectScrollView>
-                  {voicesData?.voices.map((voice) => (
-                    <SelectItem
-                      key={voice.name}
-                      value={voice.name}
-                      label={`${voice.name} (${voice.ssmlGender})`}
-                    >
-                      <Text>
-                        {voice.name} ({voice.ssmlGender})
-                      </Text>
-                    </SelectItem>
-                  ))}
-                </NativeSelectScrollView>
-              </SelectContent>
-            </Select>
+                {voicesData?.voices.map((voice) => (
+                  <Picker.Item
+                    key={voice.name}
+                    label={`${voice.name} (${voice.ssmlGender})`}
+                    value={voice.name}
+                  />
+                ))}
+              </Picker>
+            </View>
           )}
         />
       </View>
@@ -170,32 +149,23 @@ const BlockTtsFields = ({
         <Text className="mb-2 text-sm text-muted-foreground">
           TTS Model (optional)
         </Text>
+
         <Controller
           control={control}
           name={`blocks.${index}.ttsModel`}
           render={({ field: { onChange, value } }) => (
-            <Select
-              value={value || undefined}
-              onValueChange={(option: Option | undefined) => {
-                if (option) onChange(option.value);
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select model" />
-              </SelectTrigger>
-              <SelectContent>
-                <NativeSelectScrollView>
-                  {modelsData?.models.map((model) => {
-                    const label = `${model.name}${model.name === modelsData.recommendedModel ? " (Recommended)" : ""}`;
-                    return (
-                      <SelectItem key={model.name} value={model.name} label={label}>
-                        <Text>{label}</Text>
-                      </SelectItem>
-                    );
-                  })}
-                </NativeSelectScrollView>
-              </SelectContent>
-            </Select>
+            <View className="rounded-md border border-border bg-card px-2">
+              <Picker
+                selectedValue={value ?? ""}
+                onValueChange={(v) => onChange(v ? String(v) : undefined)}
+              >
+                <Picker.Item label="Select model" value="" />
+                {modelsData?.models.map((model) => {
+                  const label = `${model.name}${model.name === modelsData.recommendedModel ? " (Recommended)" : ""}`;
+                  return <Picker.Item key={model.name} label={label} value={model.name} />;
+                })}
+              </Picker>
+            </View>
           )}
         />
       </View>
@@ -288,6 +258,7 @@ export const SpeechCreate = () => {
     >
       <View className="mb-4">
         <Text className="mb-2 text-lg font-semibold">Create Speech</Text>
+
         <Text className="mb-4 text-sm text-muted-foreground">
           Fill in the form below to create a new speech with blocks
         </Text>
@@ -295,6 +266,7 @@ export const SpeechCreate = () => {
 
       <View className="mb-6">
         <Text className="mb-2 font-medium">Title</Text>
+
         <Controller
           control={control}
           name="title"
@@ -308,6 +280,7 @@ export const SpeechCreate = () => {
             />
           )}
         />
+
         {errors.title && (
           <Text className="mt-1 text-sm text-destructive">
             {errors.title.message}
@@ -318,6 +291,7 @@ export const SpeechCreate = () => {
       <View className="mb-4">
         <View className="mb-2 flex-row items-center justify-between">
           <Text className="font-medium">Blocks</Text>
+
           <Button onPress={addBlock} variant="outline" size="sm">
             <Text>Add Block</Text>
           </Button>
@@ -343,6 +317,7 @@ export const SpeechCreate = () => {
 
             <View className="mb-3">
               <Text className="mb-2 text-sm">Block Title</Text>
+
               <Controller
                 control={control}
                 name={`blocks.${index}.title`}
@@ -356,6 +331,7 @@ export const SpeechCreate = () => {
                   />
                 )}
               />
+
               {errors.blocks?.[index]?.title && (
                 <Text className="mt-1 text-sm text-destructive">
                   {errors.blocks[index]?.title?.message}
@@ -365,6 +341,7 @@ export const SpeechCreate = () => {
 
             <View className="mb-3">
               <Text className="mb-2 text-sm">Block Text</Text>
+
               <Controller
                 control={control}
                 name={`blocks.${index}.text`}
@@ -379,6 +356,7 @@ export const SpeechCreate = () => {
                   />
                 )}
               />
+
               {errors.blocks?.[index]?.text && (
                 <Text className="mt-1 text-sm text-destructive">
                   {errors.blocks[index]?.text?.message}
@@ -398,6 +376,7 @@ export const SpeechCreate = () => {
               <Text className="mb-2 text-sm text-muted-foreground">
                 TTS Style (optional)
               </Text>
+
               <Controller
                 control={control}
                 name={`blocks.${index}.ttsStyle`}
@@ -432,6 +411,7 @@ export const SpeechCreate = () => {
             {isSubmitting || mutation.isPending ? "Creating..." : "Create Speech"}
           </Text>
         </Button>
+
         <Button
           onPress={() => router.back()}
           variant="outline"
