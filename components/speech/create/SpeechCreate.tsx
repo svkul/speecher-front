@@ -1,5 +1,4 @@
 import { View, ScrollView, Alert } from "react-native";
-import { Picker } from "@react-native-picker/picker";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
@@ -17,7 +16,14 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
-// Using native Picker for stable selection behavior on Android/iOS
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  type Option,
+} from "@/components/ui/select";
 import { useThemeStore } from "@/store/themeStore";
 import { THEME } from "@/libs/theme";
 
@@ -93,23 +99,40 @@ const BlockTtsFields = ({
         <Controller
           control={control}
           name={`blocks.${index}.ttsLanguage`}
-          render={({ field: { value, onChange } }) => (
-            <View className="rounded-md border border-border bg-card px-2">
-              <Picker
-                selectedValue={value ?? ""}
-                onValueChange={(v) => {
-                  const next = v ? String(v) : undefined;
-                  onChange(next);
-                  handleLanguageChange(next);
+          render={({ field: { value, onChange } }) => {
+            // Convert string value to Option for Select component
+            const selectedLanguage = value
+              ? languagesData?.languages.find((lang) => lang.code === value)
+              : undefined;
+            const languageOption: Option | undefined = selectedLanguage
+              ? { value: selectedLanguage.code, label: selectedLanguage.name }
+              : undefined;
+
+            return (
+              <Select
+                value={languageOption}
+                onValueChange={(option: Option | undefined) => {
+                  if (option) {
+                    onChange(option.value);
+                    handleLanguageChange(option.value);
+                  } else {
+                    onChange(undefined);
+                  }
                 }}
               >
-                <Picker.Item label="Select language" value="" />
-                {languagesData?.languages.map((lang) => (
-                  <Picker.Item key={lang.code} label={lang.name} value={lang.code} />
-                ))}
-              </Picker>
-            </View>
-          )}
+                <SelectTrigger>
+                  <SelectValue placeholder="Select language" />
+                </SelectTrigger>
+                <SelectContent>
+                  {languagesData?.languages.map((lang) => (
+                    <SelectItem key={lang.code} value={lang.code} label={lang.name}>
+                      <Text>{lang.name}</Text>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            );
+          }}
         />
       </View>
 
@@ -121,27 +144,53 @@ const BlockTtsFields = ({
         <Controller
           control={control}
           name={`blocks.${index}.ttsVoice`}
-          render={({ field: { onChange, value } }) => (
-            <View className="rounded-md border border-border bg-card px-2">
-              <Picker
-                enabled={!!language}
-                selectedValue={value ?? ""}
-                onValueChange={(v) => onChange(v ? String(v) : undefined)}
+          render={({ field: { onChange, value } }) => {
+            // Convert string value to Option for Select component
+            const selectedVoice = value
+              ? voicesData?.voices.find((voice) => voice.name === value)
+              : undefined;
+            const voiceOption: Option | undefined = selectedVoice
+              ? {
+                  value: selectedVoice.name,
+                  label: `${selectedVoice.name} (${selectedVoice.ssmlGender})`,
+                }
+              : undefined;
+
+            return (
+              <Select
+                value={voiceOption}
+                onValueChange={(option: Option | undefined) => {
+                  if (option) {
+                    onChange(option.value);
+                  } else {
+                    onChange(undefined);
+                  }
+                }}
+                disabled={!language}
               >
-                <Picker.Item
-                  label={language ? "Select voice" : "Select language first"}
-                  value=""
-                />
-                {voicesData?.voices.map((voice) => (
-                  <Picker.Item
-                    key={voice.name}
-                    label={`${voice.name} (${voice.ssmlGender})`}
-                    value={voice.name}
+                <SelectTrigger>
+                  <SelectValue
+                    placeholder={
+                      language ? "Select voice" : "Select language first"
+                    }
                   />
-                ))}
-              </Picker>
-            </View>
-          )}
+                </SelectTrigger>
+                <SelectContent>
+                  {voicesData?.voices.map((voice) => (
+                    <SelectItem
+                      key={voice.name}
+                      value={voice.name}
+                      label={`${voice.name} (${voice.ssmlGender})`}
+                    >
+                      <Text>
+                        {voice.name} ({voice.ssmlGender})
+                      </Text>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            );
+          }}
         />
       </View>
 
@@ -153,20 +202,46 @@ const BlockTtsFields = ({
         <Controller
           control={control}
           name={`blocks.${index}.ttsModel`}
-          render={({ field: { onChange, value } }) => (
-            <View className="rounded-md border border-border bg-card px-2">
-              <Picker
-                selectedValue={value ?? ""}
-                onValueChange={(v) => onChange(v ? String(v) : undefined)}
+          render={({ field: { onChange, value } }) => {
+            // Convert string value to Option for Select component
+            const selectedModel = value
+              ? modelsData?.models.find((model) => model.name === value)
+              : undefined;
+            const modelLabel = selectedModel
+              ? `${selectedModel.name}${selectedModel.name === modelsData?.recommendedModel ? " (Recommended)" : ""}`
+              : undefined;
+            const modelOption: Option | undefined =
+              selectedModel && modelLabel
+                ? { value: selectedModel.name, label: modelLabel }
+                : undefined;
+
+            return (
+              <Select
+                value={modelOption}
+                onValueChange={(option: Option | undefined) => {
+                  if (option) {
+                    onChange(option.value);
+                  } else {
+                    onChange(undefined);
+                  }
+                }}
               >
-                <Picker.Item label="Select model" value="" />
-                {modelsData?.models.map((model) => {
-                  const label = `${model.name}${model.name === modelsData.recommendedModel ? " (Recommended)" : ""}`;
-                  return <Picker.Item key={model.name} label={label} value={model.name} />;
-                })}
-              </Picker>
-            </View>
-          )}
+                <SelectTrigger>
+                  <SelectValue placeholder="Select model" />
+                </SelectTrigger>
+                <SelectContent>
+                  {modelsData?.models.map((model) => {
+                    const label = `${model.name}${model.name === modelsData.recommendedModel ? " (Recommended)" : ""}`;
+                    return (
+                      <SelectItem key={model.name} value={model.name} label={label}>
+                        <Text>{label}</Text>
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+            );
+          }}
         />
       </View>
     </>

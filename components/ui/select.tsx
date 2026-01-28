@@ -13,12 +13,12 @@ type Option = SelectPrimitive.Option;
 
 /**
  * The upstream `@rn-primitives/select` types for `Root` value vary by version.
- * In this app we treat the controlled `value` as a string (the selected item's value),
- * while `onValueChange` delivers an Option-like object.
+ * For proper display of selected value, we need to pass Option object (with value and label)
+ * so that SelectValue can display the label correctly.
  */
 type SelectRootProps = Omit<React.ComponentProps<typeof SelectPrimitive.Root>, 'value' | 'onValueChange'> & {
-  value?: string;
-  onValueChange?: (option: Option | string | undefined) => void;
+  value?: Option;
+  onValueChange?: (option: Option | undefined) => void;
 };
 
 const Select = SelectPrimitive.Root as unknown as React.ComponentType<SelectRootProps>;
@@ -105,7 +105,7 @@ function SelectContent({
                       props.side === 'bottom' && 'slide-in-from-top-2',
                       props.side === 'top' && 'slide-in-from-bottom-2'
                     ),
-                    native: 'p-1',
+                    native: 'p-1 max-h-[208px] overflow-y-auto overflow-x-hidden',
                   }),
                   position === 'popper' &&
                     Platform.select({
@@ -116,6 +116,9 @@ function SelectContent({
                     }),
                   className
                 )}
+                style={Platform.select({
+                  native: { maxHeight: 208 },
+                })}
                 position={position}
                 {...props}>
                 <SelectScrollUpButton />
@@ -127,18 +130,18 @@ function SelectContent({
                         'w-full',
                         Platform.select({
                           web: 'h-[var(--radix-select-trigger-height)] min-w-[var(--radix-select-trigger-width)]',
-                          native: 'max-h-52',
+                          native: 'max-h-[208px]',
                         })
                       )
                   )}
                   style={Platform.select({
-                    native: { maxHeight: 208 },
+                    native: { maxHeight: 208, height: 208 },
                   })}>
                   {Platform.OS === 'web' ? (
                     children
                   ) : (
                     <ScrollView
-                      style={{ flex: 1 }}
+                      style={{ maxHeight: 208, height: 208 }}
                       nestedScrollEnabled={true}
                       scrollEnabled={true}
                       showsVerticalScrollIndicator={true}
